@@ -7,6 +7,7 @@ import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.Callback;
+import com.google.zxing.BarcodeFormat;
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.DecodeHintType;
 import com.google.zxing.RGBLuminanceSource;
@@ -33,37 +34,36 @@ public class RCTQRCodeLocalImage extends ReactContextBaseJavaModule {
 
     @ReactMethod
     public void decode(String path, Callback callback) {
-        Hashtable<DecodeHintType, String> hints = new Hashtable<DecodeHintType, String>();
+        Hashtable<DecodeHintType, Object> hints = new Hashtable<>();
         hints.put(DecodeHintType.CHARACTER_SET, "utf-8"); // 设置二维码内容的编码
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true; // 先获取原大小
-        options.inJustDecodeBounds = false; // 获取新的大小
+        hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
+        hints.put(DecodeHintType.POSSIBLE_FORMATS, BarcodeFormat.QR_CODE);
 
-        int sampleSize = (int) (options.outHeight / (float) 200);
+        Bitmap scanBitmap;
 
-        if (sampleSize <= 0)
-            sampleSize = 1;
-        options.inSampleSize = sampleSize;
-        Bitmap scanBitmap = null;
         if (path.startsWith("http://")||path.startsWith("https://")) {
-            scanBitmap = this.getbitmap(path);
+            scanBitmap = this.getBitmap(path);
         } else {
-            scanBitmap = BitmapFactory.decodeFile(path, options);
+            scanBitmap = BitmapFactory.decodeFile(path);
         }
+
         if (scanBitmap == null) {
             callback.invoke("cannot load image");
             return;
         }
-        int[] intArray = new int[scanBitmap.getWidth()*scanBitmap.getHeight()];
-        scanBitmap.getPixels(intArray, 0, scanBitmap.getWidth(), 0, 0, scanBitmap.getWidth(), scanBitmap.getHeight());
 
-        RGBLuminanceSource source = new RGBLuminanceSource(scanBitmap.getWidth(), scanBitmap.getHeight(), intArray);
+        int[] pixels = new int[scanBitmap.getWidth()*scanBitmap.getHeight()];
+        scanBitmap.getPixels(pixels, 0, scanBitmap.getWidth(), 0, 0, scanBitmap.getWidth(), scanBitmap.getHeight());
+
+        RGBLuminanceSource source = new RGBLuminanceSource(scanBitmap.getWidth(), scanBitmap.getHeight(), pixels);
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
         QRCodeReader reader = new QRCodeReader();
         try {
             Result result = reader.decode(bitmap, hints);
+
             if (result == null) {
                 callback.invoke("image format error");
+
             } else {
                 callback.invoke(null, result.toString());
             }
@@ -73,7 +73,7 @@ public class RCTQRCodeLocalImage extends ReactContextBaseJavaModule {
         }
     }
 
-    public static Bitmap getbitmap(String imageUri) {
+    public static Bitmap getBitmap(String imageUri) {
         Bitmap bitmap = null;
         try {
             URL myFileUrl = new URL(imageUri);

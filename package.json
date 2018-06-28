@@ -1,11 +1,11 @@
 {
     "name": "@remobile/react-native-qrcode-local-image",
-    "version": "1.0.4",
+    "version": "1.0.6",
     "qrcode-local-imagecription": "A local qrcode image parse for react-native",
     "main": "index.js",
     "author": {
-        "name": "YunJiang.Fang",
-        "email": "42550564@qq.com"
+        "name": "Danny Lin",
+        "email": ""
     },
     "license": "MIT",
     "keywords": [
@@ -25,5 +25,6 @@
     "repository": {
         "type": "git",
         "url": "git://github.com/remobile/react-native-qrcode-local-image.git"
-    }
+    },
+	"publishConfig":{"registry":"http://npm.ljit.io"}
 }
